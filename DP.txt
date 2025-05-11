@@ -1,0 +1,72 @@
+
+# Funcție pentru a obține negația unui literal
+def neg(literal):
+    return literal[1:] if literal.startswith('~') else '~' + literal
+
+# Funcție care extrage toate variabilele
+def get_variables(clauses):
+    vars = set()
+    for clause in clauses:
+        for literal in clause:
+            vars.add(literal.strip('~'))
+    return list(vars)
+
+# Funcție care citește clauzele dintr-un fișier
+def read_clauses_from_file(filename):
+    clauses = []
+    with open(filename, 'r') as f:
+        for line in f:
+            # Împărțim linia în literali
+            literals = line.strip().split()
+            if literals:
+                clauses.append(literals)
+    return clauses
+
+# Funcție care elimină clauzele care conțin un literal dat
+def remove_clauses_with_literal(clauses, literal):
+    return [clause for clause in clauses if literal not in clause]
+
+# Funcție care elimină literalul din toate clauzele (folosit în rezoluție)
+def remove_literal_from_clauses(clauses, literal):
+    new_clauses = []
+    for clause in clauses:
+        if literal in clause:
+            new_clause = [lit for lit in clause if lit != literal]
+            if new_clause:  # ignorăm clauzele goale temporar
+                new_clauses.append(new_clause)
+        else:
+            new_clauses.append(clause)
+    return new_clauses
+
+# Algoritmul DP
+def dp_algorithm(clauses):
+    variables = get_variables(clauses)
+
+    for var in variables:
+        pos = var
+        neg_var = '~' + var
+
+        pos_clauses = [c for c in clauses if pos in c]
+        neg_clauses = [c for c in clauses if neg_var in c]
+
+        # Aplicăm rezoluția pe toate combinațiile pos/neg
+        new_clauses = []
+        for c1 in pos_clauses:
+            for c2 in neg_clauses:
+                new_clause = list(set(c1 + c2))
+                new_clause = [l for l in new_clause if l != pos and l != neg_var]
+                if not new_clause:
+                    print("Clauză vidă obținută => formula este NESATISFIABILĂ")
+                    return False
+                new_clauses.append(new_clause)
+
+        clauses = [c for c in clauses if pos not in c and neg_var not in c]
+        
+        clauses.append(new_clauses)
+
+    print("Toate variabilele eliminate fără contradicții => formula este SATISFIABILĂ")
+    return True
+
+# Citim clauzele și rulăm algoritmul
+clauze = read_clauses_from_file('input.txt')
+dp_algorithm(clauze)

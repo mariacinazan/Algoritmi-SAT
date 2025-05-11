@@ -1,0 +1,70 @@
+
+# Funcție care citește clauzele dintr-un fișier
+def read_clauses_from_file(filename):
+    clauses = []
+    with open(filename, 'r') as f:
+        for line in f:
+            literals = line.strip().split()
+            if literals:
+                clauses.append(literals)
+    return clauses
+
+# Funcție care returnează toți literalii din clauze
+def get_literals(clauses):
+    return [l for clause in clauses for l in clause]
+
+
+def simplify(clauses, literal):
+    """Simplifică formula după ce literalul este considerat adevărat"""
+    new_clauses = []
+    for clause in clauses:
+        if literal in clause:
+            continue  # clauza este adevărată
+        if neg(literal) in clause:
+            new_clause = [l for l in clause if l != neg(literal)]
+            new_clauses.append(new_clause)
+        else:
+            new_clauses.append(clause)
+    return new_clauses
+
+# Funcție pentru a obține negația unui literal
+def neg(literal):
+    return literal[1:] if literal.startswith('~') else '~' + literal
+
+# Funcție care caută clauze cu un singur literal
+def find_unit_clause(clauses):
+    for clause in clauses:
+        if len(clause) == 1:
+            return clause[0]
+    return None
+
+# Funcție care găsește literali puri
+def find_pure_literal(clauses):
+    literals = get_literals(clauses)
+    for l in set(literals):
+        if neg(l) not in literals:
+            return l
+    return None
+
+# Algoritm DPLL
+def dpll(clauses, assignment=[]):
+    if not clauses:
+        return True
+    if [] in clauses:
+        return False
+    unit = find_unit_clause(clauses)
+    if unit:
+        return dpll(simplify(clauses, unit), assignment + [unit])
+    pure = find_pure_literal(clauses)
+    if pure:
+        return dpll(simplify(clauses, pure), assignment + [pure])
+    literal = get_literals(clauses)[0]
+    return (
+        dpll(simplify(clauses, literal), assignment + [literal]) or
+        dpll(simplify(clauses, neg(literal)), assignment + [neg(literal)])
+    )
+
+# Citim clauzele și rulăm algoritmul
+clauze = read_clauses_from_file('input.txt')
+rezultat = dpll(clauze)
+print("Formulă:", "Satisfiabilă" if rezultat else "Nesatisfiabilă")

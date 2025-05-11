@@ -1,0 +1,54 @@
+# Funcție pentru a obține negația unui literal
+def neg(literal):
+    return literal[1:] if literal.startswith('~') else '~' + literal
+
+# Funcție care aplică rezoluția pe două clauze
+def solve(clause1, clause2):
+    result = []
+    for l1 in clause1:
+        for l2 in clause2:
+            if l1 == neg(l2):
+                new_clause = list(set(clause1 + clause2))
+                new_clause.remove(l1)
+                new_clause.remove(l2)
+                result.append(new_clause)
+    return result
+
+# Funcție care citește clauzele dintr-un fișier
+def read_clauses_from_file(filename):
+    clauses = []
+    with open(filename, 'r') as f:
+        for line in f:
+            # Împărțim linia în literali
+            literals = line.strip().split()
+            if literals:
+                clauses.append(literals)
+    return clauses
+
+# Algoritmul Rezoluție
+def resolutie(clauses):
+    new = []
+    clauses = [list(c) for c in clauses]
+
+    while True:
+        n = len(clauses)
+        for i in range(n):
+            for j in range(i + 1, n):
+                resolvents = solve(clauses[i], clauses[j])
+                for res in resolvents:
+                    if res == []:
+                        print("Clauză vidă găsită: formula este NESATISFIABILĂ")
+                        return False
+                    if res not in clauses and res not in new:
+                        new.append(res)
+
+        if not new:
+            print("Nu se mai pot genera clauze: formula este SATISFIABILĂ")
+            return True
+
+        clauses.extend(new)
+        new = []
+
+# Citim din fișier și rulăm algoritmul
+clauze = read_clauses_from_file('input.txt')
+resolutie(clauze)
